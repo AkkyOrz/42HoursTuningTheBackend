@@ -1,1 +1,2 @@
 CREATE INDEX `status_updated_at_idx` ON `record` (`status`, `updated_at` DESC, `record_id` ASC);
+CREATE INDEX `linked_record_id_created_at_idx` ON `record_comment` (`linked_record_id`, `created_at` DESC);
