@@ -8,4 +8,10 @@ CREATE INDEX `sta_c_by_u_at_record_id` ON `record` (
 );
 CREATE INDEX `sta_c_by_u_at_record_id` ON `record_item_file` (`linked_record_id`, `item_id` ASC);
 CREATE INDEX `value_idx` ON `session` (`value`);
-CREATE INDEX `sta_cat_id_app_group_idx` ON `record` (`status`, `category_id`, `application_group`);
+CREATE INDEX `sta_cat_id_app_group_u_at_r_id_idx` ON `record` (
+  `status`,
+  `category_id`,
+  `application_group`,
+  `updated_at` DESC,
+  `record_id`
+);
