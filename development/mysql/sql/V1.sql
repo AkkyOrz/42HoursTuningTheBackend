@@ -15,3 +15,4 @@ CREATE INDEX `sta_cat_id_app_group_u_at_r_id_idx` ON `record` (
   `updated_at` DESC,
   `record_id`
 );
+CREATE INDEX `user_id_is_primary_idx` ON `group_member` (`user_id`, `is_primary`);
