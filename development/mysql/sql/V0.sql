@@ -26,7 +26,7 @@ CREATE TABLE `record` (
   `created_by` bigint NOT NULL,
   `created_at` TIMESTAMP NOT NULL,
   `updated_at` TIMESTAMP NOT NULL,
-  INDEX `status_updated_at_record_id_idx` (`status`, `updated_at`, `record_id`),
+  INDEX `status_updated_at_idx` (`status`, `updated_at`),
   PRIMARY KEY (`record_id`)
 );
 CREATE TABLE `record_item_file` (
