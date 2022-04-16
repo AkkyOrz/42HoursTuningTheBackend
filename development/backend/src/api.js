@@ -37,7 +37,13 @@ const initCount = async () => {
     let count = await recordCountCloseResult[0]["count(*)"];
     countStatus["close"] = count;
   }
-  mylog(countStatus);
+  const red = "\u001b[31m";
+  const reset = "\u001b[0m";
+  console.log(red);
+  console.log(countStatus);
+  console.log(countStatus["open"]);
+  console.log(countStatus["close"]);
+  console.log(reset);
 };
 
 const mylog = (obj) => {
