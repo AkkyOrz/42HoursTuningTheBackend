@@ -7,6 +7,7 @@ const mysql = require("mysql2/promise");
 
 const redis = require("redis");
 
+
 // MEMO: 設定項目はここを参考にした
 // https://github.com/sidorares/node-mysql2#api-and-configuration
 // https://github.com/mysqljs/mysql
@@ -40,7 +41,6 @@ const initRedis = async () => {
     redisClient.set("close_count", count);
   }
 };
-initRedis();
 
 const mylog = (obj) => {
   if (Array.isArray(obj)) {
@@ -1077,4 +1077,5 @@ module.exports = {
   postFiles,
   getRecordItemFile,
   getRecordItemFileThumbnail,
+  initRedis,
 };
