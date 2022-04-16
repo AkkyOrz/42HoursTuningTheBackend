@@ -124,6 +124,7 @@ const postRecords = async (req, res) => {
   );
   console.log("update counter");
   countStatus["open"] += 1;
+  printCountStatus();
 
   for (const e of body.fileIdList) {
     await pool.query(
@@ -807,10 +808,12 @@ const updateRecord = async (req, res) => {
     console.log("update counter");
     countStatus["open"]--;
     countStatus["close"]++;
+    printCountStatus();
   } else if (status == "open") {
     console.log("update counter");
     countStatus["open"]++;
     countStatus["close"]--;
+    printCountStatus();
   }
 
   res.send({});
