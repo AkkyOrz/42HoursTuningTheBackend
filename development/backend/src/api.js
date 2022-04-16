@@ -115,6 +115,8 @@ const postRecords = async (req, res) => {
       user.user_id,
     ]
   );
+  count = redisClient.get("open_count", 1);
+  redisClient.set("open_count", count + 1);
 
   for (const e of body.fileIdList) {
     await pool.query(
@@ -779,6 +781,17 @@ const updateRecord = async (req, res) => {
     `${status}`,
     `${recordId}`,
   ]);
+  if (status === "close") {
+    let openCount = redisClient.get("open_count", count);
+    redisClient.set("open_count", openCount - 1);
+    let closeCount = redisClient.get("close_count", count);
+    redisClient.set("close_count", closeCount + 1);
+  } else if (status === "open") {
+    let openCount = redisClient.get("open_count", count);
+    redisClient.set("open_count", openCount + 1);
+    let closeCount = redisClient.get("close_count", count);
+    redisClient.set("close_count", closeCount - 1);
+  }
 
   res.send({});
 };
