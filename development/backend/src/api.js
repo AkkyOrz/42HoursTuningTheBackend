@@ -26,6 +26,8 @@ const redisClient = redis.createClient({
 });
 
 const initRedis = async () => {
+  await redisClient.connect();
+  await redisClient.ping();
   const recordCountOpenQs = 'select count(*) from record where status = "open"';
   const [recordCountOpenResult] = await pool.query(recordCountOpenQs);
   if (recordCountOpenResult.length === 1) {
