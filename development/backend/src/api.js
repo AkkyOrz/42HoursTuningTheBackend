@@ -7,7 +7,6 @@ const mysql = require("mysql2/promise");
 
 const redis = require("redis");
 
-
 // MEMO: 設定項目はここを参考にした
 // https://github.com/sidorares/node-mysql2#api-and-configuration
 // https://github.com/mysqljs/mysql
@@ -30,15 +29,15 @@ const initRedis = async () => {
   const recordCountOpenQs = 'select count(*) from record where status = "open"';
   const [recordCountOpenResult] = await pool.query(recordCountOpenQs);
   if (recordCountOpenResult.length === 1) {
-    let count = recordCountOpenResult[0]["count(*)"];
-    redisClient.set("open_count", count);
+    let count = await recordCountOpenResult[0]["count(*)"];
+    await redisClient.set("open_count", count);
   }
   const recordCountCloseQs =
     'select count(*) from record where status = "closed"';
   const [recordCountCloseResult] = await pool.query(recordCountCloseQs);
   if (recordCountCloseResult.length === 1) {
-    let count = recordCountCloseResult[0]["count(*)"];
-    redisClient.set("close_count", count);
+    let count = await recordCountCloseResult[0]["count(*)"];
+    await redisClient.set("close_count", count);
   }
 };
 
@@ -115,8 +114,8 @@ const postRecords = async (req, res) => {
       user.user_id,
     ]
   );
-  count = redisClient.get("open_count", 1);
-  redisClient.set("open_count", count + 1);
+  count = await redisClient.get("open_count", 1);
+  await redisClient.set("open_count", count + 1);
 
   for (const e of body.fileIdList) {
     await pool.query(
@@ -519,7 +518,7 @@ const allActive = async (req, res) => {
     items[i] = resObj;
   }
 
-  count = redisClient.get("open_count");
+  count = await redisClient.get("open_count");
 
   res.send({ count: count, items: items });
 };
@@ -634,7 +633,7 @@ const allClosed = async (req, res) => {
     items[i] = resObj;
   }
 
-  count = redisClient.get("close_count");
+  count = await redisClient.get("close_count");
 
   res.send({ count: count, items: items });
 };
@@ -782,15 +781,15 @@ const updateRecord = async (req, res) => {
     `${recordId}`,
   ]);
   if (status === "close") {
-    let openCount = redisClient.get("open_count", count);
-    redisClient.set("open_count", openCount - 1);
-    let closeCount = redisClient.get("close_count", count);
-    redisClient.set("close_count", closeCount + 1);
+    let openCount = await redisClient.get("open_count", count);
+    await redisClient.set("open_count", openCount - 1);
+    let closeCount = await redisClient.get("close_count", count);
+    await redisClient.set("close_count", closeCount + 1);
   } else if (status === "open") {
-    let openCount = redisClient.get("open_count", count);
-    redisClient.set("open_count", openCount + 1);
-    let closeCount = redisClient.get("close_count", count);
-    redisClient.set("close_count", closeCount - 1);
+    let openCount = await redisClient.get("open_count", count);
+    await redisClient.set("open_count", openCount + 1);
+    let closeCount = await redisClient.get("close_count", count);
+    await redisClient.set("close_count", closeCount - 1);
   }
 
   res.send({});
