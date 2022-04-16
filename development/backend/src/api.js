@@ -116,7 +116,25 @@ const getRecord = async (req, res) => {
 
   const recordId = req.params.recordId;
 
-  const recordQs = `select * from record where record_id = ?`;
+  // const recordQs = `select * from record where record_id = ?`;
+  const recordQs = `
+select
+  record.*,
+  gi1.name as created_by_primary_group_name,
+  gi2.name as application_group_name,
+  user.name as created_by_name,
+  category.name as category_name
+from
+  record
+  inner join user on record.created_by = user.user_id
+  inner join group_member gm1 on gm1.user_id = record.created_by
+  AND gm1.is_primary = true
+  inner join group_info gi1 on gi1.group_id = gm1.group_id
+  inner join group_info gi2 on gi2.group_id = record.application_group
+  inner join category on category.category_id = record.category_id
+where
+  record_id = ?
+  `;
 
   const [recordResult] = await pool.query(recordQs, [`${recordId}`]);
   mylog(recordResult);
@@ -142,43 +160,47 @@ const getRecord = async (req, res) => {
     files: [],
   };
 
-  const searchPrimaryGroupQs = `select * from group_member where user_id = ? and is_primary = true`;
+  // const searchPrimaryGroupQs = `select * from group_member where user_id = ? and is_primary = true`;
   const searchUserQs = `select * from user where user_id = ?`;
   const searchGroupQs = `select * from group_info where group_id = ?`;
   const searchCategoryQs = `select * from category where category_id = ?`;
 
   const line = recordResult[0];
 
-  const [primaryResult] = await pool.query(searchPrimaryGroupQs, [
-    line.created_by,
-  ]);
-  if (primaryResult.length === 1) {
-    const primaryGroupId = primaryResult[0].group_id;
+  // const [primaryResult] = await pool.query(searchPrimaryGroupQs, [
+  //   line.created_by,
+  // ]);
+  // if (primaryResult.length === 1) {
+  //   const primaryGroupId = primaryResult[0].group_id;
 
-    const [groupResult] = await pool.query(searchGroupQs, [primaryGroupId]);
-    if (groupResult.length === 1) {
-      recordInfo.createdByPrimaryGroupName = groupResult[0].name;
-    }
-  }
+  //   const [groupResult] = await pool.query(searchGroupQs, [primaryGroupId]);
+  //   if (groupResult.length === 1) {
+  //     recordInfo.createdByPrimaryGroupName = groupResult[0].name;
+  //   }
+  // }
+  recordInfo.createdByPrimaryGroupName = line.created_by_primary_group_name;
 
-  const [appGroupResult] = await pool.query(searchGroupQs, [
-    line.application_group,
-  ]);
-  if (appGroupResult.length === 1) {
-    recordInfo.applicationGroupName = appGroupResult[0].name;
-  }
+  // const [appGroupResult] = await pool.query(searchGroupQs, [
+  //   line.application_group,
+  // ]);
+  // if (appGroupResult.length === 1) {
+  //   recordInfo.applicationGroupName = appGroupResult[0].name;
+  // }
+  recordInfo.applicationGroupName = line.application_group_name;
 
-  const [userResult] = await pool.query(searchUserQs, [line.created_by]);
-  if (userResult.length === 1) {
-    recordInfo.createdByName = userResult[0].name;
-  }
+  // const [userResult] = await pool.query(searchUserQs, [line.created_by]);
+  // if (userResult.length === 1) {
+  //   recordInfo.createdByName = userResult[0].name;
+  // }
+  recordInfo.createdByName = line.created_by_name;
 
-  const [categoryResult] = await pool.query(searchCategoryQs, [
-    line.category_id,
-  ]);
-  if (categoryResult.length === 1) {
-    recordInfo.categoryName = categoryResult[0].name;
-  }
+  // const [categoryResult] = await pool.query(searchCategoryQs, [
+  //   line.category_id,
+  // ]);
+  // if (categoryResult.length === 1) {
+  //   recordInfo.categoryName = categoryResult[0].name;
+  // }
+  recordInfo.categoryName = line.category_name;
 
   recordInfo.recordId = line.record_id;
   recordInfo.status = line.status;
@@ -189,7 +211,20 @@ const getRecord = async (req, res) => {
   recordInfo.createdBy = line.created_by;
   recordInfo.createdAt = line.created_at;
 
-  const searchItemQs = `select * from record_item_file where linked_record_id = ? order by item_id asc`;
+  // const searchItemQs = `select * from record_item_file where linked_record_id = ? order by item_id asc`;
+  const searchItemQs = `
+  select
+  record_item_file.item_id,
+  file.name
+from
+  record_item_file
+JOIN
+  file ON file.file_id = record_item_file.linked_file_id
+where
+  linked_record_id = ?
+order by
+  item_id asc
+  `;
   const [itemResult] = await pool.query(searchItemQs, [line.record_id]);
   mylog("itemResult");
   mylog(itemResult);
@@ -197,12 +232,13 @@ const getRecord = async (req, res) => {
   const searchFileQs = `select * from file where file_id = ?`;
   for (let i = 0; i < itemResult.length; i++) {
     const item = itemResult[i];
-    const [fileResult] = await pool.query(searchFileQs, [item.linked_file_id]);
+    // const [fileResult] = await pool.query(searchFileQs, [item.linked_file_id]);
 
-    let fileName = "";
-    if (fileResult.length !== 0) {
-      fileName = fileResult[0].name;
-    }
+    // let fileName = "";
+    // if (fileResult.length !== 0) {
+    //   fileName = fileResult[0].name;
+    // }
+    fileName = item.name;
 
     recordInfo.files.push({ itemId: item.item_id, name: fileName });
   }
