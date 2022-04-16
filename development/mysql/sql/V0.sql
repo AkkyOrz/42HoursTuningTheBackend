@@ -31,6 +31,7 @@ CREATE TABLE `record` (
 CREATE TABLE `record_item_file` (
   `item_id` bigint NOT NULL AUTO_INCREMENT,
   `linked_record_id` VARCHAR(64) NOT NULL,
+  # record_id
   `linked_file_id` VARCHAR(64) NOT NULL,
   `linked_thumbnail_file_id` VARCHAR(64) NOT NULL,
   `created_at` TIMESTAMP NOT NULL,
@@ -45,8 +46,10 @@ CREATE TABLE `record_last_access` (
 CREATE TABLE `record_comment` (
   `comment_id` bigint NOT NULL AUTO_INCREMENT,
   `linked_record_id` VARCHAR(64) NOT NULL,
+  # record_id
   `value` VARCHAR(512) NOT NULL,
   `created_by` bigint NOT NULL,
+  # user_id
   `created_at` TIMESTAMP NOT NULL,
   PRIMARY KEY (`comment_id`)
 );
