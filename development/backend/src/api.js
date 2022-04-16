@@ -526,7 +526,15 @@ const allActive = async (req, res) => {
   }
 
   console.log("allActive");
+  const recordCountQs = 'select count(*) from record where status = "closed"';
+  if (recordCountResult.length === 1) {
+    countDB = recordCountResult[0]["count(*)"];
+  }
   count = countStatus["open"];
+  if (countDB !== count) {
+    console.log("db count is not equal to countStatus: " + countDB);
+    printCountStatus();
+  }
   printCountStatus();
 
   res.send({ count: count, items: items });
