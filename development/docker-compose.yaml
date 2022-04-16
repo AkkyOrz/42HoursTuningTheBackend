@@ -37,3 +37,5 @@ services:
       volumes:
         - ../volume/mysql:/var/lib/mysql
         - /var/log/mysql:/var/log/mysql
+    redis:
+        image: redis

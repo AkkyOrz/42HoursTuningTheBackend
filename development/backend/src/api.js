@@ -5,6 +5,8 @@ const jimp = require("jimp");
 
 const mysql = require("mysql2/promise");
 
+const redis = require("redis");
+
 // MEMO: 設定項目はここを参考にした
 // https://github.com/sidorares/node-mysql2#api-and-configuration
 // https://github.com/mysqljs/mysql
@@ -17,6 +19,28 @@ const mysqlOption = {
   connectionLimit: 10,
 };
 const pool = mysql.createPool(mysqlOption);
+
+const redisClient = redis.createClient({
+  host: "redis",
+  port: 6379,
+});
+
+const initRedis = async () => {
+  const recordCountOpenQs = 'select count(*) from record where status = "open"';
+  const [recordCountOpenResult] = await pool.query(recordCountOpenQs);
+  if (recordCountOpenResult.length === 1) {
+    let count = recordCountOpenResult[0]["count(*)"];
+    redisClient.set("open_count", count);
+  }
+  const recordCountCloseQs =
+    'select count(*) from record where status = "closed"';
+  const [recordCountCloseResult] = await pool.query(recordCountCloseQs);
+  if (recordCountCloseResult.length === 1) {
+    let count = recordCountCloseResult[0]["count(*)"];
+    redisClient.set("close_count", count);
+  }
+};
+initRedis();
 
 const mylog = (obj) => {
   if (Array.isArray(obj)) {
@@ -493,12 +517,7 @@ const allActive = async (req, res) => {
     items[i] = resObj;
   }
 
-  const recordCountQs = 'select count(*) from record where status = "open"';
-
-  const [recordCountResult] = await pool.query(recordCountQs);
-  if (recordCountResult.length === 1) {
-    count = recordCountResult[0]["count(*)"];
-  }
+  count = redisClient.get("open_count");
 
   res.send({ count: count, items: items });
 };
@@ -613,12 +632,7 @@ const allClosed = async (req, res) => {
     items[i] = resObj;
   }
 
-  const recordCountQs = 'select count(*) from record where status = "closed"';
-
-  const [recordCountResult] = await pool.query(recordCountQs);
-  if (recordCountResult.length === 1) {
-    count = recordCountResult[0]["count(*)"];
-  }
+  count = redisClient.get("close_count");
 
   res.send({ count: count, items: items });
 };
