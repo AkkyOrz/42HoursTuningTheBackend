@@ -13,8 +13,8 @@ app.get("/api/hello", (req, res) => {
 
 app.post("/api/client/records", async (req, res, next) => {
   if (!flag) {
-    flag = true;
     await api.initCount();
+    flag = true;
   }
   try {
     await api.postRecords(req, res);
@@ -26,8 +26,8 @@ app.post("/api/client/records", async (req, res, next) => {
 
 app.get("/api/client/records/:recordId", async (req, res, next) => {
   if (!flag) {
-    flag = true;
     await api.initCount();
+    flag = true;
   }
   try {
     await api.getRecord(req, res);
@@ -39,8 +39,8 @@ app.get("/api/client/records/:recordId", async (req, res, next) => {
 
 app.get("/api/client/record-views/tomeActive", async (req, res, next) => {
   if (!flag) {
-    flag = true;
     await api.initCount();
+    flag = true;
   }
   try {
     await api.tomeActive(req, res);
@@ -52,8 +52,8 @@ app.get("/api/client/record-views/tomeActive", async (req, res, next) => {
 
 app.get("/api/client/record-views/allActive", async (req, res, next) => {
   if (!flag) {
-    flag = true;
     await api.initCount();
+    flag = true;
   }
   try {
     await api.allActive(req, res);
@@ -65,8 +65,8 @@ app.get("/api/client/record-views/allActive", async (req, res, next) => {
 
 app.get("/api/client/record-views/allClosed", async (req, res, next) => {
   if (!flag) {
-    flag = true;
     await api.initCount();
+    flag = true;
   }
   try {
     await api.allClosed(req, res);
@@ -78,8 +78,8 @@ app.get("/api/client/record-views/allClosed", async (req, res, next) => {
 
 app.get("/api/client/record-views/mineActive", async (req, res, next) => {
   if (!flag) {
-    flag = true;
     await api.initCount();
+    flag = true;
   }
   try {
     await api.mineActive(req, res);
@@ -91,8 +91,8 @@ app.get("/api/client/record-views/mineActive", async (req, res, next) => {
 
 app.put("/api/client/records/:recordId", async (req, res, next) => {
   if (!flag) {
-    flag = true;
     await api.initCount();
+    flag = true;
   }
   try {
     await api.updateRecord(req, res);
@@ -104,8 +104,8 @@ app.put("/api/client/records/:recordId", async (req, res, next) => {
 
 app.get("/api/client/records/:recordId/comments", async (req, res, next) => {
   if (!flag) {
-    flag = true;
     await api.initCount();
+    flag = true;
   }
   try {
     await api.getComments(req, res);
@@ -117,8 +117,8 @@ app.get("/api/client/records/:recordId/comments", async (req, res, next) => {
 
 app.post("/api/client/records/:recordId/comments", async (req, res, next) => {
   if (!flag) {
-    flag = true;
     await api.initCount();
+    flag = true;
   }
   try {
     await api.postComments(req, res);
@@ -130,8 +130,8 @@ app.post("/api/client/records/:recordId/comments", async (req, res, next) => {
 
 app.get("/api/client/categories", async (req, res, next) => {
   if (!flag) {
-    flag = true;
     await api.initCount();
+    flag = true;
   }
   try {
     await api.getCategories(req, res);
@@ -143,8 +143,8 @@ app.get("/api/client/categories", async (req, res, next) => {
 
 app.post("/api/client/files", async (req, res, next) => {
   if (!flag) {
-    flag = true;
     await api.initCount();
+    flag = true;
   }
   try {
     await api.postFiles(req, res);
@@ -159,8 +159,8 @@ app.get(
 
   async (req, res, next) => {
     if (!flag) {
-      flag = true;
       await api.initCount();
+      flag = true;
     }
     try {
       await api.getRecordItemFile(req, res);
@@ -176,8 +176,8 @@ app.get(
 
   async (req, res, next) => {
     if (!flag) {
-      flag = true;
       await api.initCount();
+      flag = true;
     }
     try {
       await api.getRecordItemFileThumbnail(req, res);
