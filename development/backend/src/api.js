@@ -275,56 +275,98 @@ const tomeActive = async (req, res) => {
   }
 
   // const searchMyGroupQs = `select * from group_member where user_id = ?`;
-  const searchMyGroupQs = `
-  select
-  category_group.category_id,
-  category_group.application_group
-from
-  group_member
-  JOIN category_group ON category_group.group_id = group_member.group_id
-where
-  group_member.user_id = ?
-  `;
-  const [myGroupResult] = await pool.query(searchMyGroupQs, [user.user_id]);
-  mylog(myGroupResult);
+  //   const searchMyGroupQs = `
+  //   select
+  //   category_group.category_id,
+  //   category_group.application_group
+  // from
+  //   group_member
+  //   JOIN category_group ON category_group.group_id = group_member.group_id
+  // where
+  //   group_member.user_id = ?
+  //   `;
+  //   const [myGroupResult] = await pool.query(searchMyGroupQs, [user.user_id]);
+  //   mylog(myGroupResult);
 
-  const targetCategoryAppGroupList = [];
-  // const searchTargetQs = `select * from category_group where group_id = ?`;
+  //   const targetCategoryAppGroupList = [];
+  //   // const searchTargetQs = `select * from category_group where group_id = ?`;
 
-  for (let i = 0; i < myGroupResult.length; i++) {
-    const targetLine = myGroupResult[i];
-    mylog(targetLine);
+  //   for (let i = 0; i < myGroupResult.length; i++) {
+  //     const targetLine = myGroupResult[i];
+  //     mylog(targetLine);
 
-    targetCategoryAppGroupList.push({
-      categoryId: targetLine.category_id,
-      applicationGroup: targetLine.application_group,
-    });
-  }
+  //     targetCategoryAppGroupList.push({
+  //       categoryId: targetLine.category_id,
+  //       applicationGroup: targetLine.application_group,
+  //     });
+  //   }
 
-  let searchRecordQs = `select * from record where status = "open" and (category_id, application_group) in (`;
-  let recordCountQs =
-    'select count(*) from record where status = "open" and (category_id, application_group) in (';
-  const param = [];
+  // let searchRecordQs = `select * from record where status = "open" and (category_id, application_group) in (`;
+  // let searchRecordQs = `select * from record where status = "open" and (category_id, application_group) in (`;
+  // let recordCountQs =
+  // 'select count(*) from record where status = "open" and (category_id, application_group) in (';
+  const param = [user.user_id, limit, offset];
 
-  for (let i = 0; i < targetCategoryAppGroupList.length; i++) {
-    if (i !== 0) {
-      searchRecordQs += ", (?, ?)";
-      recordCountQs += ", (?, ?)";
-    } else {
-      searchRecordQs += " (?, ?)";
-      recordCountQs += " (?, ?)";
-    }
-    param.push(targetCategoryAppGroupList[i].categoryId);
-    param.push(targetCategoryAppGroupList[i].applicationGroup);
-  }
-  searchRecordQs += " ) order by updated_at desc, record_id  limit ? offset ?";
-  recordCountQs += " )";
-  param.push(limit);
-  param.push(offset);
-  mylog(searchRecordQs);
+  // for (let i = 0; i < targetCategoryAppGroupList.length; i++) {
+  //   if (i !== 0) {
+  //     // searchRecordQs += ", (?, ?)";
+  //     recordCountQs += ", (?, ?)";
+  //   } else {
+  //     // searchRecordQs += " (?, ?)";
+  //     recordCountQs += " (?, ?)";
+  //   }
+  //   param.push(targetCategoryAppGroupList[i].categoryId);
+  //   param.push(targetCategoryAppGroupList[i].applicationGroup);
+  // }
+  // searchRecordQs += " ) order by updated_at desc, record_id  limit ? offset ?";
+  // recordCountQs += " )";
+  // param.push(limit);
+  // param.push(offset);
+  // mylog(searchRecordQs);
   mylog(param);
 
-  const [recordResult] = await pool.query(searchRecordQs, param);
+  let myCustomQuery = `
+  select
+  record.*
+from
+  record
+  JOIN category_group ON (
+    category_group.category_id = record.category_id
+    AND category_group.application_group = record.application_group
+  )
+  JOIN group_member ON (
+    group_member.group_id = category_group.group_id
+    AND group_member.user_id = ?
+  )
+where
+  record.status = "open"
+order by
+  record.updated_at desc,
+  record.record_id
+limit ? offset ?
+  `;
+  let recordCountQs = `
+  select
+  count(*)
+from
+  record
+  JOIN category_group ON (
+    category_group.category_id = record.category_id
+    AND category_group.application_group = record.application_group
+  )
+  JOIN group_member ON (
+    group_member.group_id = category_group.group_id
+    AND group_member.user_id = ?
+  )
+where
+  record.status = "open"
+order by
+  record.updated_at desc,
+  record.record_id
+  `;
+  const [recordResult] = await pool.query(myCustomQuery, param);
+  // const [recordResult] = await pool.query(searchRecordQs, param);
+
   mylog(recordResult);
 
   const items = Array(recordResult.length);

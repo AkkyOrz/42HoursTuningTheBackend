@@ -24,11 +24,29 @@
 -- | 83af774e-e3f9-4fc5-b417-76021e997250 | open   | t      | d       |           1 |                 1 |          1 | 2022-04-16 16:42:10 | 2022-04-16 16:42:13 |
 -- | 2d2c5f22-d7d7-470b-a9f1-e6424397071e | open   | title1 | detail1 |           1 |                 1 |          1 | 2022-04-16 16:42:05 | 2022-04-16 16:42:08 |
 -- +--------------------------------------+--------+--------+---------+-------------+-------------------+------------+---------------------+---------------------+
+-- select
+--   category_group.category_id,
+--   category_group.application_group
+-- from
+--   group_member
+--   JOIN category_group ON category_group.group_id = group_member.group_id
+-- where
+--   group_member.user_id = ?
 select
-  category_group.category_id,
-  category_group.application_group
+  record.*
 from
-  group_member
-  JOIN category_group ON category_group.group_id = group_member.group_id
+  record
+  JOIN category_group ON (
+    category_group.category_id = record.category_id
+    AND category_group.application_group = record.application_group
+  )
+  JOIN group_member ON (
+    group_member.group_id = category_group.group_id
+    AND group_member.user_id = ?
+  )
 where
-  group_member.user_id = ?
+  record.status = "open"
+order by
+  record.updated_at desc,
+  record.record_id
+limit ? offset ?
