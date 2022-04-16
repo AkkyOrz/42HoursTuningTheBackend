@@ -37,6 +37,7 @@ const initCount = async () => {
     let count = await recordCountCloseResult[0]["count(*)"];
     countStatus["close"] = count;
   }
+  mylog(countStatus);
 };
 
 const mylog = (obj) => {
