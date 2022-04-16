@@ -527,6 +527,7 @@ const allActive = async (req, res) => {
 
   console.log("allActive");
   const recordCountQs = 'select count(*) from record where status = "closed"';
+  const [recordCountResult] = await pool.query(recordCountQs);
   if (recordCountResult.length === 1) {
     countDB = recordCountResult[0]["count(*)"];
   }
