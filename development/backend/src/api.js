@@ -5,7 +5,8 @@ const jimp = require("jimp");
 
 const mysql = require("mysql2/promise");
 
-const redis = require("redis");
+let Redis = require("ioredis");
+let redisClient = new Redis(6379, "redis");
 
 // MEMO: 設定項目はここを参考にした
 // https://github.com/sidorares/node-mysql2#api-and-configuration
@@ -20,14 +21,7 @@ const mysqlOption = {
 };
 const pool = mysql.createPool(mysqlOption);
 
-const redisClient = redis.createClient({
-  host: "redis",
-  port: 6379,
-});
-
 const initRedis = async () => {
-  await redisClient.connect();
-  await redisClient.ping();
   const recordCountOpenQs = 'select count(*) from record where status = "open"';
   const [recordCountOpenResult] = await pool.query(recordCountOpenQs);
   if (recordCountOpenResult.length === 1) {

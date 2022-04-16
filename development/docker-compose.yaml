@@ -39,3 +39,5 @@ services:
         - /var/log/mysql:/var/log/mysql
     redis:
         image: redis
+        ports:
+          - 6379:6379
