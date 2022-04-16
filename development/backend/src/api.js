@@ -274,31 +274,34 @@ const tomeActive = async (req, res) => {
     limit = 10;
   }
 
-  const searchMyGroupQs = `select * from group_member where user_id = ?`;
+  // const searchMyGroupQs = `select * from group_member where user_id = ?`;
+  const searchMyGroupQs = `
+  select
+  category_group.category_id,
+  category_group.application_group
+from
+  group_member
+  JOIN category_group ON category_group.group_id = group_member.group_id
+where
+  group_member.user_id = ?
+  `;
   const [myGroupResult] = await pool.query(searchMyGroupQs, [user.user_id]);
   mylog(myGroupResult);
 
   const targetCategoryAppGroupList = [];
-  const searchTargetQs = `select * from category_group where group_id = ?`;
+  // const searchTargetQs = `select * from category_group where group_id = ?`;
 
   for (let i = 0; i < myGroupResult.length; i++) {
-    const groupId = myGroupResult[i].group_id;
-    mylog(groupId);
+    const targetLine = myGroupResult[i];
+    mylog(targetLine);
 
-    const [targetResult] = await pool.query(searchTargetQs, [groupId]);
-    for (let j = 0; j < targetResult.length; j++) {
-      const targetLine = targetResult[j];
-      mylog(targetLine);
-
-      targetCategoryAppGroupList.push({
-        categoryId: targetLine.category_id,
-        applicationGroup: targetLine.application_group,
-      });
-    }
+    targetCategoryAppGroupList.push({
+      categoryId: targetLine.category_id,
+      applicationGroup: targetLine.application_group,
+    });
   }
 
-  let searchRecordQs =
-    'select * from record where status = "open" and (category_id, application_group) in (';
+  let searchRecordQs = `select * from record where status = "open" and (category_id, application_group) in (`;
   let recordCountQs =
     'select count(*) from record where status = "open" and (category_id, application_group) in (';
   const param = [];
