@@ -22,6 +22,6 @@ from
 JOIN
   file ON file.file_id = record_item_file.linked_file_id
 where
-  linked_record_id = ?
+  linked_record_id = 1
 order by
   item_id asc
