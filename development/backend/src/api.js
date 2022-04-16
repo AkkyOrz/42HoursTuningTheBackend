@@ -23,6 +23,15 @@ const mysqlOption = {
 };
 const pool = mysql.createPool(mysqlOption);
 
+const printCountStatus = () => {
+  const red = "\u001b[31m";
+  const reset = "\u001b[0m";
+  console.log(red + "counter" + reset);
+  console.log(countStatus);
+  console.log(countStatus["open"]);
+  console.log(countStatus["close"]);
+};
+
 const initCount = async () => {
   const recordCountOpenQs = 'select count(*) from record where status = "open"';
   const [recordCountOpenResult] = await pool.query(recordCountOpenQs);
@@ -37,13 +46,7 @@ const initCount = async () => {
     let count = await recordCountCloseResult[0]["count(*)"];
     countStatus["close"] = count;
   }
-  const red = "\u001b[31m";
-  const reset = "\u001b[0m";
-  console.log(red);
-  console.log(countStatus);
-  console.log(countStatus["open"]);
-  console.log(countStatus["close"]);
-  console.log(reset);
+  printCountStatus();
 };
 
 const mylog = (obj) => {
@@ -522,7 +525,9 @@ const allActive = async (req, res) => {
     items[i] = resObj;
   }
 
+  console.log("allActive");
   count = countStatus["open"];
+  printCountStatus();
 
   res.send({ count: count, items: items });
 };
