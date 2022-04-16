@@ -122,6 +122,7 @@ const postRecords = async (req, res) => {
       user.user_id,
     ]
   );
+  console.log("update counter");
   countStatus["open"] += 1;
 
   for (const e of body.fileIdList) {
@@ -798,10 +799,16 @@ const updateRecord = async (req, res) => {
     `${status}`,
     `${recordId}`,
   ]);
-  if (status === "close") {
+  console.log("-------------");
+  console.log(status);
+  console.log("-------------");
+  console.log(status.class);
+  if (status == "close") {
+    console.log("update counter");
     countStatus["open"]--;
     countStatus["close"]++;
-  } else if (status === "open") {
+  } else if (status == "open") {
+    console.log("update counter");
     countStatus["open"]++;
     countStatus["close"]--;
   }
