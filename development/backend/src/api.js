@@ -322,7 +322,7 @@ LIMIT ? OFFSET ?
   const searchThumbQs = `
     select
   record.record_id,
-  most_recent_file.item_id
+  rif1.item_id
 from
   record
   JOIN category_group ON (
@@ -331,21 +331,17 @@ from
   )
   JOIN group_member ON (group_member.group_id = category_group.group_id)
   JOIN group_info ON group_info.group_id = record.application_group
-  INNER JOIN (
+  INNER JOIN record_item_file AS rif1 ON rif1.linked_record_id = record.record_id
+  AND rif1.item_id = (
     SELECT
-      *
+      MIN(item_id)
     FROM
       record_item_file
     WHERE
-      item_id IN (
-        SELECT
-          MIN(item_id)
-        FROM
-          record_item_file
-        GROUP BY
-          linked_record_id
-      )
-  ) AS most_recent_file ON record.record_id = most_recent_file.linked_record_id
+      record_item_file.linked_record_id = record.record_id
+    GROUP BY
+      linked_record_id
+  )
 where
   record.status = "open"
   AND group_member.user_id = ?
