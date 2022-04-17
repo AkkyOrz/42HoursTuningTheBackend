@@ -591,8 +591,37 @@ const allClosed = async (req, res) => {
   }
 
   const searchRecordQs = `select * from record where status = "closed" order by updated_at desc, record_id asc limit ? offset ?`;
+  let myCustomQuery = `
+select
+  record.record_id,
+  record.title,
+  record.application_group,
+  record.created_by,
+  record.created_at,
+  record.updated_at,
+  user.name,
+  group_info.name as application_group_name, 
+    CASE
+      WHEN (
+        record.updated_at > COALESCE(record_last_access.access_time, '1970-01-01 00:00:00')
+      ) THEN 1
+      ELSE 0
+    END as is_new
+from
+  record
+  JOIN user ON user.user_id = record.created_by
+  JOIN group_info ON group_info.group_id = record.application_group
+  LEFT JOIN record_last_access ON record_last_access.record_id = record.record_id
+    AND record_last_access.user_id = user.user_id
+where
+  record.status = "closed"
+order by
+  record.updated_at desc,
+  record.record_id asc
+LIMIT ? OFFSET ?
+  `;
 
-  const [recordResult] = await pool.query(searchRecordQs, [limit, offset]);
+  const [recordResult] = await pool.query(myCustomQuery, [limit, offset]);
   mylog(recordResult);
 
   const items = Array(recordResult.length);
@@ -634,15 +663,17 @@ const allClosed = async (req, res) => {
     let commentCount = 0;
     let isUnConfirmed = true;
 
-    const [userResult] = await pool.query(searchUserQs, [createdBy]);
-    if (userResult.length === 1) {
-      createdByName = userResult[0].name;
-    }
+    // const [userResult] = await pool.query(searchUserQs, [createdBy]);
+    // if (userResult.length === 1) {
+    //   createdByName = userResult[0].name;
+    // }
+    createdByName = line.name;
 
-    const [groupResult] = await pool.query(searchGroupQs, [applicationGroup]);
-    if (groupResult.length === 1) {
-      applicationGroupName = groupResult[0].name;
-    }
+    // const [groupResult] = await pool.query(searchGroupQs, [applicationGroup]);
+    // if (groupResult.length === 1) {
+    //   applicationGroupName = groupResult[0].name;
+    // }
+    applicationGroupName = line.application_group_name;
 
     const [itemResult] = await pool.query(searchThumbQs, [recordId]);
     if (itemResult.length === 1) {
@@ -654,18 +685,19 @@ const allClosed = async (req, res) => {
       commentCount = countResult[0]["count(*)"];
     }
 
-    const [lastResult] = await pool.query(searchLastQs, [
-      user.user_id,
-      recordId,
-    ]);
-    if (lastResult.length === 1) {
-      mylog(updatedAt);
-      const updatedAtNum = Date.parse(updatedAt);
-      const accessTimeNum = Date.parse(lastResult[0].access_time);
-      if (updatedAtNum <= accessTimeNum) {
-        isUnConfirmed = false;
-      }
-    }
+    // const [lastResult] = await pool.query(searchLastQs, [
+    //   user.user_id,
+    //   recordId,
+    // ]);
+    // if (lastResult.length === 1) {
+    //   mylog(updatedAt);
+    //   const updatedAtNum = Date.parse(updatedAt);
+    //   const accessTimeNum = Date.parse(lastResult[0].access_time);
+    //   if (updatedAtNum <= accessTimeNum) {
+    //     isUnConfirmed = false;
+    //   }
+    // }
+    isUnConfirmed = line.is_new == 1 ? true : false;
 
     resObj.recordId = recordId;
     resObj.title = line.title;
