@@ -8,6 +8,15 @@ cp -rv /da/mysql ../../volume/
 echo "ファイルをリストアします..."
 cp -r /da/file ../../volume/backend/
 
+echo "logをrotateします..."
+mv /var/log/nginx/access.log "/var/log/nginx/`date +"%Y%m%d%H%M%S"`_access.log"
+mv /var/log/mysql/mysql-slow.log "/var/log/mysql/`date +"%Y%m%d%H%M%S"`_mysql-slow.log"
+touch /var/log/nginx/access.log
+chmod 777 /var/log/nginx/access.log
+touch /var/log/mysql/mysql-slow.log
+chmod 777 /var/log/mysql/mysql-slow.log
+
+
 # docker-composeを起動。
 (cd ../../development && docker-compose up -d)
 

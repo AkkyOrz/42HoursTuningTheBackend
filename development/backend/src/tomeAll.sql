@@ -176,4 +176,88 @@ order by
   record.updated_at desc,
   record.record_id
 LIMIT
-  10 OFFSET 1
+  10 OFFSET 1;
+select
+  record.record_id,
+  record.title,
+  record.application_group,
+  record.created_by,
+  record.created_at,
+  record.updated_at,
+  user.name,
+  group_info.name as application_group_name,
+  record_last_access.access_time
+from
+  record
+  JOIN user ON user.user_id = record.created_by
+  JOIN category_group ON (
+    category_group.category_id = record.category_id
+    AND category_group.application_group = record.application_group
+  )
+  JOIN group_member ON (group_member.group_id = category_group.group_id)
+  JOIN group_info ON group_info.group_id = record.application_group
+  LEFT JOIN record_last_access ON record_last_access.record_id = record.record_id
+  AND record_last_access.user_id = user.user_id
+where
+  record.status = "open"
+  AND group_member.user_id = 3263
+order by
+  record.updated_at desc,
+  record.record_id
+LIMIT
+  10 OFFSET 1;
+select
+  record.record_id,
+  record.title,
+  record.application_group,
+  record.created_by,
+  record.created_at,
+  record.updated_at
+from
+  record
+  JOIN user ON user.user_id = record.created_by
+  JOIN category_group ON category_group.category_id = record.category_id
+  AND category_group.application_group = record.application_group
+  JOIN group_member ON (group_member.group_id = category_group.group_id)
+where
+  record.status = "open"
+  AND group_member.user_id = 3263
+order by
+  record.updated_at desc,
+  record.record_id
+LIMIT
+  10 OFFSET 1;
+
+select
+  record.record_id,
+  record.title,
+  record.application_group,
+  record.created_by,
+  record.created_at,
+  record.updated_at,
+  user.name,
+  group_info.name as application_group_name, 
+    CASE
+      WHEN (
+        record.updated_at > COALESCE(record_last_access.access_time, '1970-01-01 00:00:00')
+      ) THEN 1
+      ELSE 0
+    END as is_new
+from
+  record
+  JOIN category_group ON (
+    category_group.category_id = record.category_id
+    AND category_group.application_group = record.application_group
+  )
+  JOIN group_member ON (group_member.group_id = category_group.group_id)
+  JOIN user ON user.user_id = record.created_by
+  JOIN group_info ON group_info.group_id = record.application_group
+  LEFT JOIN record_last_access ON record_last_access.record_id = record.record_id
+    AND record_last_access.user_id = user.user_id
+where
+  record.status = "open"
+  AND group_member.user_id = 1
+order by
+  record.updated_at desc,
+  record.record_id
+  Limit 10;
