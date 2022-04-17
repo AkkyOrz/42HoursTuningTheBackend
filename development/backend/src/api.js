@@ -274,55 +274,7 @@ const tomeActive = async (req, res) => {
     limit = 10;
   }
 
-  // const searchMyGroupQs = `select * from group_member where user_id = ?`;
-  //   const searchMyGroupQs = `
-  //   select
-  //   category_group.category_id,
-  //   category_group.application_group
-  // from
-  //   group_member
-  //   JOIN category_group ON category_group.group_id = group_member.group_id
-  // where
-  //   group_member.user_id = ?
-  //   `;
-  //   const [myGroupResult] = await pool.query(searchMyGroupQs, [user.user_id]);
-  //   mylog(myGroupResult);
-
-  //   const targetCategoryAppGroupList = [];
-  //   // const searchTargetQs = `select * from category_group where group_id = ?`;
-
-  //   for (let i = 0; i < myGroupResult.length; i++) {
-  //     const targetLine = myGroupResult[i];
-  //     mylog(targetLine);
-
-  //     targetCategoryAppGroupList.push({
-  //       categoryId: targetLine.category_id,
-  //       applicationGroup: targetLine.application_group,
-  //     });
-  //   }
-
-  // let searchRecordQs = `select * from record where status = "open" and (category_id, application_group) in (`;
-  // let searchRecordQs = `select * from record where status = "open" and (category_id, application_group) in (`;
-  // let recordCountQs =
-  // 'select count(*) from record where status = "open" and (category_id, application_group) in (';
   const param = [user.user_id, limit, offset];
-
-  // for (let i = 0; i < targetCategoryAppGroupList.length; i++) {
-  //   if (i !== 0) {
-  //     // searchRecordQs += ", (?, ?)";
-  //     recordCountQs += ", (?, ?)";
-  //   } else {
-  //     // searchRecordQs += " (?, ?)";
-  //     recordCountQs += " (?, ?)";
-  //   }
-  //   param.push(targetCategoryAppGroupList[i].categoryId);
-  //   param.push(targetCategoryAppGroupList[i].applicationGroup);
-  // }
-  // searchRecordQs += " ) order by updated_at desc, record_id  limit ? offset ?";
-  // recordCountQs += " )";
-  // param.push(limit);
-  // param.push(offset);
-  // mylog(searchRecordQs);
   mylog(param);
 
   let myCustomQuery = `
@@ -362,15 +314,11 @@ LIMIT ? OFFSET ?
   `;
 
   const [recordResult] = await pool.query(myCustomQuery, param);
-  // const [recordResult] = await pool.query(searchRecordQs, param);
-
   mylog(recordResult);
 
   const items = Array(recordResult.length);
   let count = 0;
 
-  // const searchUserQs = "select * from user where user_id = ?";
-  // const searchGroupQs = "select * from group_info where group_id = ?";
   const searchThumbQs = `
     select
   record.record_id,
@@ -407,8 +355,6 @@ order by
 LIMIT
   ? OFFSET ?
   `;
-  // const countQs =
-  //   "select count(*) from record_comment where linked_record_id = ?";
   const countQs = `select
   record_comment.linked_record_id,
   count(*) as comment_count
@@ -431,8 +377,6 @@ order by
 LIMIT
   ? OFFSET ?
 `;
-  // const searchLastQs =
-  //   "select * from record_last_access where user_id = ? and record_id = ?";
 
   const [itemResult] = await pool.query(searchThumbQs, param);
   const [countResult] = await pool.query(countQs, param);
@@ -463,15 +407,10 @@ LIMIT
     let commentCount = 0;
     let isUnConfirmed = true;
 
+    // record以外のテーブル
     createdByName = line.name;
     applicationGroupName = line.application_group_name;
-
-    // const [itemResult] = await pool.query(searchThumbQs, [recordId]);
-    // if (itemResult.length === 1) {
-    //   thumbNailItemId = itemResult[0].item_id;
-    // }
     thumbNailItemId = itemResult[i].item_id;
-
     commentCount = countResult[i].comment_count;
     isUnConfirmed = line.is_new == 1 ? true : false;
 
