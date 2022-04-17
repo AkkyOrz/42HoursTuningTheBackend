@@ -24,4 +24,48 @@ where
 order by
   record.updated_at desc,
   record.record_id asc
-LIMIT ? OFFSET ?
+LIMIT ? OFFSET ?;
+
+
+select
+  record.record_id,
+  rif1.item_id
+from
+  record
+  JOIN group_info ON group_info.group_id = record.application_group
+  INNER JOIN record_item_file AS rif1 ON rif1.linked_record_id = record.record_id
+  AND rif1.item_id = (
+    SELECT
+      MIN(item_id)
+    FROM
+      record_item_file
+    WHERE
+      record_item_file.linked_record_id = record.record_id
+    GROUP BY
+      linked_record_id
+  )
+where
+  record.status = "closed"
+order by
+  record.updated_at desc,
+  record.record_id ASC
+LIMIT
+  ? OFFSET ?;
+
+
+select
+  record_comment.linked_record_id,
+  count(*) as comment_count
+from
+  record
+  JOIN group_member ON (group_member.group_id = category_group.group_id)
+  JOIN record_comment ON record_comment.linked_record_id = record.record_id
+where
+  record.status = "closed"
+GROUP BY
+  linked_record_id
+order by
+  record.updated_at desc,
+  record.record_id ASC
+LIMIT
+  ? OFFSET ?

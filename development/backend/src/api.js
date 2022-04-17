@@ -621,7 +621,8 @@ order by
 LIMIT ? OFFSET ?
   `;
 
-  const [recordResult] = await pool.query(myCustomQuery, [limit, offset]);
+  const param = [limit, offset];
+  const [recordResult] = await pool.query(myCustomQuery, param);
   mylog(recordResult);
 
   const items = Array(recordResult.length);
@@ -629,13 +630,57 @@ LIMIT ? OFFSET ?
 
   const searchUserQs = "select * from user where user_id = ?";
   const searchGroupQs = "select * from group_info where group_id = ?";
-  const searchThumbQs =
-    "select * from record_item_file where linked_record_id = ? order by item_id asc limit 1";
-  const countQs =
-    "select count(*) from record_comment where linked_record_id = ?";
-  const searchLastQs =
-    "select * from record_last_access where user_id = ? and record_id = ?";
+  // const searchThumbQs =
+  // "select * from record_item_file where linked_record_id = ? order by item_id asc limit 1";
+  const searchThumbQs = `select
+  record.record_id,
+  rif1.item_id
+from
+  record
+  JOIN group_info ON group_info.group_id = record.application_group
+  INNER JOIN record_item_file AS rif1 ON rif1.linked_record_id = record.record_id
+  AND rif1.item_id = (
+    SELECT
+      MIN(item_id)
+    FROM
+      record_item_file
+    WHERE
+      record_item_file.linked_record_id = record.record_id
+    GROUP BY
+      linked_record_id
+  )
+where
+  record.status = "closed"
+order by
+  record.updated_at desc,
+  record.record_id ASC
+LIMIT
+  ? OFFSET ?
 
+`;
+  // const countQs =
+  //   "select count(*) from record_comment where linked_record_id = ?";
+  const countQs = `select
+  record_comment.linked_record_id,
+  count(*) as comment_count
+from
+  record
+  JOIN group_info ON group_info.group_id = record.application_group
+  JOIN record_comment ON record_comment.linked_record_id = record.record_id
+where
+  record.status = "closed"
+GROUP BY
+  linked_record_id
+order by
+  record.updated_at desc,
+  record.record_id ASC
+LIMIT
+  ? OFFSET ?`;
+  // const searchLastQs =
+  //   "select * from record_last_access where user_id = ? and record_id = ?";
+
+  const [itemResult] = await pool.query(searchThumbQs, param);
+  const [countResult] = await pool.query(countQs, param);
   for (let i = 0; i < recordResult.length; i++) {
     const resObj = {
       recordId: null,
@@ -663,40 +708,11 @@ LIMIT ? OFFSET ?
     let commentCount = 0;
     let isUnConfirmed = true;
 
-    // const [userResult] = await pool.query(searchUserQs, [createdBy]);
-    // if (userResult.length === 1) {
-    //   createdByName = userResult[0].name;
-    // }
+    
     createdByName = line.name;
-
-    // const [groupResult] = await pool.query(searchGroupQs, [applicationGroup]);
-    // if (groupResult.length === 1) {
-    //   applicationGroupName = groupResult[0].name;
-    // }
     applicationGroupName = line.application_group_name;
-
-    const [itemResult] = await pool.query(searchThumbQs, [recordId]);
-    if (itemResult.length === 1) {
-      thumbNailItemId = itemResult[0].item_id;
-    }
-
-    const [countResult] = await pool.query(countQs, [recordId]);
-    if (countResult.length === 1) {
-      commentCount = countResult[0]["count(*)"];
-    }
-
-    // const [lastResult] = await pool.query(searchLastQs, [
-    //   user.user_id,
-    //   recordId,
-    // ]);
-    // if (lastResult.length === 1) {
-    //   mylog(updatedAt);
-    //   const updatedAtNum = Date.parse(updatedAt);
-    //   const accessTimeNum = Date.parse(lastResult[0].access_time);
-    //   if (updatedAtNum <= accessTimeNum) {
-    //     isUnConfirmed = false;
-    //   }
-    // }
+    thumbNailItemId = itemResult[i].item_id;
+    commentCount = countResult[i].comment_count;
     isUnConfirmed = line.is_new == 1 ? true : false;
 
     resObj.recordId = recordId;
