@@ -327,57 +327,38 @@ const tomeActive = async (req, res) => {
 
   let myCustomQuery = `
 select
-  record.*,
-  user.name as created_by_name,
-  group_info.name as application_group_name,
-  most_recent_file.item_id,
-  comment_count_table.comment_count
-  
+  record.record_id,
+  record.title,
+  record.application_group,
+  record.created_by,
+  record.created_at,
+  record.updated_at,
+  user.name,
+  group_info.name as application_group_name, 
+    CASE
+      WHEN (
+        record.updated_at > COALESCE(record_last_access.access_time, '1970-01-01 00:00:00')
+      ) THEN 1
+      ELSE 0
+    END as is_new
 from
   record
   JOIN category_group ON (
     category_group.category_id = record.category_id
     AND category_group.application_group = record.application_group
   )
-  JOIN group_member ON (
-    group_member.group_id = category_group.group_id
-    AND group_member.user_id = ?
-  )
+  JOIN group_member ON (group_member.group_id = category_group.group_id)
   JOIN user ON user.user_id = record.created_by
   JOIN group_info ON group_info.group_id = record.application_group
-  INNER JOIN (
-    SELECT
-      *
-    FROM
-      record_item_file
-    WHERE
-      item_id IN (
-        SELECT
-          MIN(item_id)
-        FROM
-          record_item_file
-        GROUP BY
-          linked_record_id
-      )
-  ) AS most_recent_file ON record.record_id = most_recent_file.linked_record_id
-  INNER JOIN (
-    SELECT
-      linked_record_id,
-      count(*) as comment_count
-    FROM
-      record_comment
-    GROUP BY
-      linked_record_id
-  ) AS comment_count_table ON comment_count_table.linked_record_id = record.record_id
-
+  LEFT JOIN record_last_access ON record_last_access.record_id = record.record_id
+    AND record_last_access.user_id = user.user_id
 where
   record.status = "open"
+  AND group_member.user_id = ?
 order by
   record.updated_at desc,
   record.record_id
-  
-
-limit ? offset ?
+LIMIT ? OFFSET ?
   `;
 
   const [recordResult] = await pool.query(myCustomQuery, param);
@@ -428,7 +409,7 @@ limit ? offset ?
     // if (userResult.length === 1) {
     //   createdByName = userResult[0].name;
     // }
-    createdByName = line.created_by_name;
+    createdByName = line.name;
 
     // const [groupResult] = await pool.query(searchGroupQs, [applicationGroup]);
     // if (groupResult.length === 1) {
@@ -436,31 +417,31 @@ limit ? offset ?
     // }
     applicationGroupName = line.application_group_name;
 
-    // const [itemResult] = await pool.query(searchThumbQs, [recordId]);
-    // if (itemResult.length === 1) {
-    //   thumbNailItemId = itemResult[0].item_id;
-    // }
-    thumbNailItemId = line.item_id;
-
-    // const [countResult] = await pool.query(countQs, [recordId]);
-    // if (countResult.length === 1) {
-    //   commentCount = countResult[0]["count(*)"];
-    // }
-    commentCount = line.comment_count;
-
-    const [lastResult] = await pool.query(searchLastQs, [
-      user.user_id,
-      recordId,
-    ]);
-    if (lastResult.length === 1) {
-      mylog(updatedAt);
-      const updatedAtNum = Date.parse(updatedAt);
-      const accessTimeNum = Date.parse(lastResult[0].access_time);
-      if (updatedAtNum <= accessTimeNum) {
-        isUnConfirmed = false;
-      }
+    const [itemResult] = await pool.query(searchThumbQs, [recordId]);
+    if (itemResult.length === 1) {
+      thumbNailItemId = itemResult[0].item_id;
     }
-    // isUnConfirmed = line.is_new == 1 ? false : true;
+    // thumbNailItemId = line.item_id;
+
+    const [countResult] = await pool.query(countQs, [recordId]);
+    if (countResult.length === 1) {
+      commentCount = countResult[0]["count(*)"];
+    }
+    // commentCount = line.comment_count;
+
+    // const [lastResult] = await pool.query(searchLastQs, [
+    //   user.user_id,
+    //   recordId,
+    // ]);
+    // if (lastResult.length === 1) {
+    //   mylog(updatedAt);
+    //   const updatedAtNum = Date.parse(updatedAt);
+    //   const accessTimeNum = Date.parse(lastResult[0].access_time);
+    //   if (updatedAtNum <= accessTimeNum) {
+    //     isUnConfirmed = false;
+    //   }
+    // }
+    isUnConfirmed = line.is_new == 1 ? true : false;
 
     resObj.recordId = recordId;
     resObj.title = line.title;
