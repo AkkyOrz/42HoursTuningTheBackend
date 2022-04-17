@@ -373,11 +373,34 @@ LIMIT ? OFFSET ?
   const searchGroupQs = "select * from group_info where group_id = ?";
   const searchThumbQs =
     "select * from record_item_file where linked_record_id = ? order by item_id asc limit 1";
-  const countQs =
-    "select count(*) from record_comment where linked_record_id = ?";
+  // const countQs =
+  //   "select count(*) from record_comment where linked_record_id = ?";
+  const countQs = `select
+  record_comment.linked_record_id,
+  count(*) as comment_count
+from
+  record
+  JOIN category_group ON (
+    category_group.category_id = record.category_id
+    AND category_group.application_group = record.application_group
+  )
+  JOIN group_member ON (group_member.group_id = category_group.group_id)
+  JOIN record_comment ON record_comment.linked_record_id = record.record_id
+where
+  record.status = "open"
+  AND group_member.user_id = ?
+GROUP BY
+  linked_record_id
+order by
+  record.updated_at desc,
+  record.record_id
+LIMIT
+  ? OFFSET ?
+`;
   const searchLastQs =
     "select * from record_last_access where user_id = ? and record_id = ?";
 
+  const [countResult] = await pool.query(countQs, param);
   for (let i = 0; i < recordResult.length; i++) {
     const resObj = {
       recordId: null,
@@ -423,11 +446,10 @@ LIMIT ? OFFSET ?
     }
     // thumbNailItemId = line.item_id;
 
-    const [countResult] = await pool.query(countQs, [recordId]);
-    if (countResult.length === 1) {
-      commentCount = countResult[0]["count(*)"];
-    }
-    // commentCount = line.comment_count;
+    // if (countResult.length === 1) {
+    //   commentCount = countResult[i].comment_count;
+    // }
+    commentCount = countResult[i].comment_count;
 
     // const [lastResult] = await pool.query(searchLastQs, [
     //   user.user_id,
