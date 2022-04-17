@@ -369,10 +369,44 @@ LIMIT ? OFFSET ?
   const items = Array(recordResult.length);
   let count = 0;
 
-  const searchUserQs = "select * from user where user_id = ?";
-  const searchGroupQs = "select * from group_info where group_id = ?";
-  const searchThumbQs =
-    "select * from record_item_file where linked_record_id = ? order by item_id asc limit 1";
+  // const searchUserQs = "select * from user where user_id = ?";
+  // const searchGroupQs = "select * from group_info where group_id = ?";
+  const searchThumbQs = `
+    select
+  record.record_id,
+  most_recent_file.item_id
+from
+  record
+  JOIN category_group ON (
+    category_group.category_id = record.category_id
+    AND category_group.application_group = record.application_group
+  )
+  JOIN group_member ON (group_member.group_id = category_group.group_id)
+  JOIN group_info ON group_info.group_id = record.application_group
+  INNER JOIN (
+    SELECT
+      *
+    FROM
+      record_item_file
+    WHERE
+      item_id IN (
+        SELECT
+          MIN(item_id)
+        FROM
+          record_item_file
+        GROUP BY
+          linked_record_id
+      )
+  ) AS most_recent_file ON record.record_id = most_recent_file.linked_record_id
+where
+  record.status = "open"
+  AND group_member.user_id = ?
+order by
+  record.updated_at desc,
+  record.record_id
+LIMIT
+  ? OFFSET ?
+  `;
   // const countQs =
   //   "select count(*) from record_comment where linked_record_id = ?";
   const countQs = `select
@@ -397,9 +431,10 @@ order by
 LIMIT
   ? OFFSET ?
 `;
-  const searchLastQs =
-    "select * from record_last_access where user_id = ? and record_id = ?";
+  // const searchLastQs =
+  //   "select * from record_last_access where user_id = ? and record_id = ?";
 
+  const [itemResult] = await pool.query(searchThumbQs, param);
   const [countResult] = await pool.query(countQs, param);
   for (let i = 0; i < recordResult.length; i++) {
     const resObj = {
@@ -428,41 +463,16 @@ LIMIT
     let commentCount = 0;
     let isUnConfirmed = true;
 
-    // const [userResult] = await pool.query(searchUserQs, [createdBy]);
-    // if (userResult.length === 1) {
-    //   createdByName = userResult[0].name;
-    // }
     createdByName = line.name;
-
-    // const [groupResult] = await pool.query(searchGroupQs, [applicationGroup]);
-    // if (groupResult.length === 1) {
-    //   applicationGroupName = groupResult[0].name;
-    // }
     applicationGroupName = line.application_group_name;
 
-    const [itemResult] = await pool.query(searchThumbQs, [recordId]);
-    if (itemResult.length === 1) {
-      thumbNailItemId = itemResult[0].item_id;
-    }
-    // thumbNailItemId = line.item_id;
-
-    // if (countResult.length === 1) {
-    //   commentCount = countResult[i].comment_count;
+    // const [itemResult] = await pool.query(searchThumbQs, [recordId]);
+    // if (itemResult.length === 1) {
+    //   thumbNailItemId = itemResult[0].item_id;
     // }
+    thumbNailItemId = itemResult[i].item_id;
+
     commentCount = countResult[i].comment_count;
-
-    // const [lastResult] = await pool.query(searchLastQs, [
-    //   user.user_id,
-    //   recordId,
-    // ]);
-    // if (lastResult.length === 1) {
-    //   mylog(updatedAt);
-    //   const updatedAtNum = Date.parse(updatedAt);
-    //   const accessTimeNum = Date.parse(lastResult[0].access_time);
-    //   if (updatedAtNum <= accessTimeNum) {
-    //     isUnConfirmed = false;
-    //   }
-    // }
     isUnConfirmed = line.is_new == 1 ? true : false;
 
     resObj.recordId = recordId;
